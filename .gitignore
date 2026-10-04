@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+
+# 情侣共同资产：身体地图标注、阶梯进度、愿望清单
+# 属于私密个人数据，任何情况下都不要提交
+data/
+*.corrupt-*

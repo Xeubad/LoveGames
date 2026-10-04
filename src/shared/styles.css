@@ -1,0 +1,653 @@
+/* ============================================================
+   全局设计令牌与共享组件类
+   ------------------------------------------------------------
+   约定：
+   - 颜色、圆角、阴影、间距、字号一律走这里的变量，组件内不写死值
+   - 每个游戏只用 games-registry 里的 color / gradient 覆盖
+     --lg-accent、--lg-accent-2、--lg-gradient 三个变量，其余全站统一
+   - 大厅（游戏选择页）用深色底，进入具体游戏后统一浅色底
+   ============================================================ */
+
+:root {
+  /* ---- 文字与表面 ---- */
+  --lg-ink: #241c33;
+  --lg-ink-soft: #4a4160;
+  --lg-muted: #7a7190;
+  --lg-faint: #a79fba;
+  --lg-surface: #ffffff;
+  --lg-surface-sunken: #f7f5fb;
+  --lg-on-accent: #ffffff;
+  --lg-border: rgba(36, 28, 51, 0.10);
+  --lg-border-strong: rgba(36, 28, 51, 0.18);
+
+  /* ---- 大厅（深色）---- */
+  --lg-lobby-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --lg-lobby-ink: #ffffff;
+  --lg-lobby-muted: rgba(255, 255, 255, 0.62);
+  --lg-lobby-faint: rgba(255, 255, 255, 0.34);
+  --lg-lobby-surface: rgba(255, 255, 255, 0.055);
+  --lg-lobby-border: rgba(255, 255, 255, 0.10);
+
+  /* ---- 游戏主题（默认值，各游戏自行覆盖）---- */
+  --lg-accent: #ff6b9d;
+  --lg-accent-2: #ff8a80;
+  --lg-gradient: linear-gradient(135deg, #ff6b9d 0%, #ff8a80 100%);
+
+  /* ---- 状态色 ---- */
+  --lg-ok-ink: #1a7f37;
+  --lg-ok-bg: rgba(46, 160, 67, 0.12);
+  --lg-ok-border: rgba(46, 160, 67, 0.30);
+  --lg-warn-ink: #8a5b00;
+  --lg-warn-bg: rgba(255, 193, 7, 0.13);
+  --lg-warn-border: rgba(255, 193, 7, 0.34);
+  --lg-danger-ink: #a02438;
+  --lg-danger-bg: rgba(220, 53, 69, 0.11);
+  --lg-danger-border: rgba(220, 53, 69, 0.30);
+
+  /* ---- 圆角 ---- */
+  --lg-r-xs: 6px;
+  --lg-r-sm: 10px;
+  --lg-r-md: 14px;
+  --lg-r-lg: 20px;
+  --lg-r-xl: 26px;
+  --lg-r-pill: 999px;
+
+  /* ---- 阴影 ---- */
+  --lg-sh-1: 0 1px 2px rgba(36, 28, 51, 0.06);
+  --lg-sh-2: 0 6px 18px rgba(36, 28, 51, 0.09);
+  --lg-sh-3: 0 18px 48px rgba(36, 28, 51, 0.16);
+  --lg-sh-accent: 0 6px 20px color-mix(in srgb, var(--lg-accent) 34%, transparent);
+
+  /* ---- 间距 ---- */
+  --lg-sp-1: 4px;
+  --lg-sp-2: 8px;
+  --lg-sp-3: 12px;
+  --lg-sp-4: 16px;
+  --lg-sp-5: 24px;
+  --lg-sp-6: 32px;
+  --lg-sp-7: 48px;
+
+  /* ---- 字号 ---- */
+  --lg-fs-xs: 12px;
+  --lg-fs-sm: 13px;
+  --lg-fs-md: 15px;
+  --lg-fs-lg: 18px;
+  --lg-fs-xl: 24px;
+  --lg-fs-2xl: 32px;
+
+  /* ---- 布局 ---- */
+  --lg-toolbar-h: 56px;
+  --lg-content-max: 900px;
+
+  /* ---- iOS 安全区 ----
+     需要 index.html 里的 viewport-fit=cover，否则 env() 恒为 0。
+     竖屏 Safari 里底部一般是 0（浏览器自己的工具条占着），
+     真正吃这块的是横屏的刘海/Home 指示条区域和「添加到主屏幕」后的全屏态。 */
+  --lg-safe-t: env(safe-area-inset-top, 0px);
+  --lg-safe-b: env(safe-area-inset-bottom, 0px);
+  --lg-safe-l: env(safe-area-inset-left, 0px);
+  --lg-safe-r: env(safe-area-inset-right, 0px);
+}
+
+/* ============ 游戏主题 ============
+   主题色的唯一来源。新增游戏时在这里加一个 .theme-<id> 块即可，
+   games-registry.js 只管元数据（id / 名称 / 描述 / 图标 / 路由），不再存颜色。 */
+
+.theme-truth-or-dare {
+  --lg-accent: #667eea;
+  --lg-accent-2: #764ba2;
+  --lg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.theme-flight-chess {
+  --lg-accent: #f0588b;
+  --lg-accent-2: #ff8a80;
+  --lg-gradient: linear-gradient(135deg, #f0588b 0%, #ff8a80 100%);
+}
+
+.theme-secret-match {
+  --lg-accent: #f0793b;
+  --lg-accent-2: #f5b041;
+  --lg-gradient: linear-gradient(135deg, #f0793b 0%, #f5b041 100%);
+}
+
+.theme-warmup-ladder {
+  --lg-accent: #a045d6;
+  --lg-accent-2: #ec4899;
+  --lg-gradient: linear-gradient(135deg, #a045d6 0%, #ec4899 100%);
+}
+
+.theme-body-map {
+  --lg-accent: #12a594;
+  --lg-accent-2: #4f9cf9;
+  --lg-gradient: linear-gradient(135deg, #12a594 0%, #4f9cf9 100%);
+}
+
+.theme-power-play {
+  --lg-accent: #9b1c31;
+  --lg-accent-2: #d9455f;
+  --lg-gradient: linear-gradient(135deg, #9b1c31 0%, #d9455f 100%);
+}
+
+/* ============ 基础重置 ============ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* iOS 横屏时 Safari 会自己把正文字号调大，破坏排版，关掉 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: var(--lg-fs-md);
+  color: var(--lg-ink);
+  background: var(--lg-surface-sunken);
+}
+
+button {
+  font-family: inherit;
+}
+
+/* iOS 交互修正：
+   - 默认会给每次点击蒙一层灰色方块，游戏里频繁点按钮时很脏
+   - manipulation 去掉「双击缩放」的 300ms 等待，同时仍然允许捏合缩放 */
+button,
+a,
+label,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(36, 28, 51, 0.16);
+  border-radius: var(--lg-r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(36, 28, 51, 0.28);
+}
+
+/* ============ 页面外壳 ============ */
+
+/* 游戏内页面：浅色底 + 主题色微光 */
+.lg-shell {
+  min-height: 100vh;
+  /* iOS 的 100vh = 地址栏收起时的大视口，用它会让页面比可见区域高约一个工具条，
+     表现为底部内容被顶出去、或出现一段滚不动的空白。dvh 跟着工具条伸缩。
+     写成两行是标准的渐进增强：不认识的旧浏览器会丢掉第二行。 */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(900px 420px at 50% -8%, color-mix(in srgb, var(--lg-accent) 20%, transparent), transparent 72%),
+    linear-gradient(180deg, #fdfbff 0%, #f5f2fa 100%);
+}
+
+.lg-body {
+  flex: 1;
+  width: 100%;
+  max-width: var(--lg-content-max);
+  margin: 0 auto;
+  padding: var(--lg-sp-5) var(--lg-sp-4) var(--lg-sp-7);
+  /* 底部留出自定义安全区，别把 CTA 压在 Home 指示条上 */
+  padding-bottom: calc(var(--lg-sp-7) + var(--lg-safe-b));
+}
+
+/* 大厅：深色底 */
+.lg-lobby {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--lg-lobby-bg);
+  color: var(--lg-lobby-ink);
+}
+
+/* ============ 顶部工具条 ============ */
+
+.lg-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  /* height 改 min-height + padding，才能让出刘海/状态栏那一行而不挤压内容 */
+  min-height: var(--lg-toolbar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--lg-sp-3);
+  padding: var(--lg-safe-t) calc(var(--lg-sp-4) + var(--lg-safe-r)) 0 calc(var(--lg-sp-4) + var(--lg-safe-l));
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--lg-border);
+}
+
+.lg-toolbar__title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--lg-sp-2);
+  font-size: var(--lg-fs-md);
+  font-weight: 650;
+  color: var(--lg-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lg-toolbar__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.lg-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--lg-sp-2);
+  flex-shrink: 0;
+}
+
+/* ============ 卡片 ============ */
+
+.lg-card {
+  background: var(--lg-surface);
+  border: 1px solid var(--lg-border);
+  border-radius: var(--lg-r-lg);
+  box-shadow: var(--lg-sh-2);
+  padding: var(--lg-sp-5);
+}
+
+.lg-card--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ============ 按钮 ============ */
+
+.lg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lg-sp-2);
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--lg-r-sm);
+  font-size: var(--lg-fs-md);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+  white-space: nowrap;
+}
+
+.lg-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.lg-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lg-btn--primary {
+  background: var(--lg-gradient);
+  color: var(--lg-on-accent);
+  box-shadow: var(--lg-sh-accent);
+}
+
+.lg-btn--ghost {
+  background: var(--lg-surface);
+  border-color: var(--lg-border-strong);
+  color: var(--lg-ink-soft);
+}
+
+.lg-btn--quiet {
+  background: transparent;
+  color: var(--lg-muted);
+  padding: 8px 12px;
+}
+
+/* hover 态只在真有悬停指针的设备上生效。iOS Safari 点完会把 :hover
+   一直留在元素上（"粘住的悬停"），表现为按钮高亮不消失、
+   身体地图的格子点完一直发暗。触屏上的即时反馈由上面的 :active 负责。 */
+@media (hover: hover) and (pointer: fine) {
+  .lg-btn--primary:hover:not(:disabled) {
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--lg-accent) 46%, transparent);
+  }
+
+  .lg-btn--ghost:hover:not(:disabled) {
+    border-color: var(--lg-accent);
+    color: var(--lg-accent);
+  }
+
+  .lg-btn--quiet:hover:not(:disabled) {
+    background: var(--lg-surface-sunken);
+    color: var(--lg-accent);
+  }
+}
+
+.lg-btn--sm {
+  padding: 6px 14px;
+  font-size: var(--lg-fs-sm);
+  border-radius: var(--lg-r-xs);
+}
+
+.lg-btn--block {
+  width: 100%;
+}
+
+/* ============ 分段选择器（难度 / 内容尺度共用） ============ */
+
+.lg-segment {
+  display: inline-flex;
+  gap: var(--lg-sp-1);
+  padding: var(--lg-sp-1);
+  background: var(--lg-surface-sunken);
+  border: 1px solid var(--lg-border);
+  border-radius: var(--lg-r-pill);
+}
+
+.lg-segment__item {
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--lg-r-pill);
+  background: transparent;
+  color: var(--lg-muted);
+  font-size: var(--lg-fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lg-segment__item:hover:not(.is-active) {
+    color: var(--lg-ink-soft);
+  }
+}
+
+.lg-segment__item.is-active {
+  background: var(--lg-gradient);
+  color: var(--lg-on-accent);
+  box-shadow: var(--lg-sh-1);
+}
+
+/* ============ 开关 ============ */
+
+.lg-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.lg-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.lg-switch input:disabled {
+  cursor: not-allowed;
+}
+
+.lg-switch__track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--lg-r-pill);
+  background: #d9d4e3;
+  transition: background 0.22s ease, opacity 0.22s ease;
+  pointer-events: none;
+}
+
+.lg-switch__track::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--lg-sh-1);
+  transition: transform 0.22s ease;
+}
+
+.lg-switch input:checked + .lg-switch__track {
+  background: var(--lg-gradient);
+}
+
+.lg-switch input:checked + .lg-switch__track::before {
+  transform: translateX(18px);
+}
+
+.lg-switch input:disabled + .lg-switch__track {
+  opacity: 0.4;
+}
+
+/* ============ 徽章 ============ */
+
+.lg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lg-sp-1);
+  padding: 4px 12px;
+  border-radius: var(--lg-r-pill);
+  border: 1px solid var(--lg-border-strong);
+  background: var(--lg-surface-sunken);
+  color: var(--lg-muted);
+  font-size: var(--lg-fs-xs);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.lg-badge--accent {
+  border-color: color-mix(in srgb, var(--lg-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--lg-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--lg-accent) 82%, #000);
+}
+
+/* 题目/任务来源标注：AI 生成 还是 本地题库 */
+.lg-source {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--lg-r-pill);
+  border: 1px solid transparent;
+  font-size: var(--lg-fs-xs);
+  font-weight: 600;
+}
+
+.lg-source--ai {
+  color: var(--lg-ok-ink);
+  background: var(--lg-ok-bg);
+  border-color: var(--lg-ok-border);
+}
+
+.lg-source--local {
+  color: var(--lg-muted);
+  background: var(--lg-surface-sunken);
+  border-color: var(--lg-border);
+}
+
+/* ============ 提示条（成功 / 注意 / 失败） ============ */
+
+.lg-notice {
+  padding: 10px 12px;
+  border-radius: var(--lg-r-sm);
+  border: 1px solid var(--lg-border);
+  background: var(--lg-surface-sunken);
+  color: var(--lg-ink-soft);
+  font-size: var(--lg-fs-sm);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.lg-notice--warn {
+  color: var(--lg-warn-ink);
+  background: var(--lg-warn-bg);
+  border-color: var(--lg-warn-border);
+}
+
+.lg-notice--danger {
+  color: var(--lg-danger-ink);
+  background: var(--lg-danger-bg);
+  border-color: var(--lg-danger-border);
+}
+
+.lg-notice--ok {
+  color: var(--lg-ok-ink);
+  background: var(--lg-ok-bg);
+  border-color: var(--lg-ok-border);
+}
+
+/* ============ 弹窗 ============ */
+
+.lg-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--lg-sp-4);
+  background: rgba(24, 18, 38, 0.58);
+  backdrop-filter: blur(6px);
+}
+
+.lg-modal--top {
+  z-index: 110;
+}
+
+.lg-modal__panel {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - var(--lg-sp-6));
+  max-height: calc(100dvh - var(--lg-sp-6));
+  overflow-y: auto;
+  padding: var(--lg-sp-6) var(--lg-sp-5);
+  /* 弹窗内部自己滚，底部要多留一段安全区，否则最后一行压在 Home 指示条上 */
+  padding-bottom: calc(var(--lg-sp-6) + var(--lg-safe-b));
+  border-radius: var(--lg-r-xl);
+  background: var(--lg-surface);
+  box-shadow: var(--lg-sh-3);
+  text-align: center;
+  animation: lg-pop 0.26s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lg-modal__title {
+  margin-bottom: var(--lg-sp-4);
+  font-size: var(--lg-fs-xl);
+  font-weight: 700;
+  color: var(--lg-accent);
+}
+
+.lg-modal__text {
+  margin-bottom: var(--lg-sp-5);
+  font-size: var(--lg-fs-lg);
+  line-height: 1.8;
+  color: var(--lg-ink);
+}
+
+@keyframes lg-pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ============ 表单 ============ */
+
+.lg-field {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--lg-border-strong);
+  border-radius: var(--lg-r-sm);
+  background: var(--lg-surface);
+  color: var(--lg-ink);
+  font-family: inherit;
+  /* 必须是 16px：iOS Safari 在聚焦字号小于 16px 的文本框时会自动放大整页，
+     且放大后不会自己缩回去，房间号输入框就是这么把版面顶歪的。 */
+  font-size: 16px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.lg-field::placeholder {
+  color: var(--lg-faint);
+}
+
+.lg-field:focus {
+  outline: none;
+  border-color: var(--lg-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lg-accent) 16%, transparent);
+}
+
+/* ============ 通用工具类 ============ */
+
+.lg-row {
+  display: flex;
+  align-items: center;
+  gap: var(--lg-sp-3);
+}
+
+.lg-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg-sp-4);
+}
+
+.lg-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.lg-muted {
+  color: var(--lg-muted);
+}
+
+.lg-title {
+  font-size: var(--lg-fs-xl);
+  font-weight: 700;
+  color: var(--lg-ink);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --lg-toolbar-h: 52px;
+    --lg-sp-5: 18px;
+    --lg-sp-6: 24px;
+  }
+
+  .lg-body {
+    padding: var(--lg-sp-4) var(--lg-sp-3) var(--lg-sp-6);
+  }
+
+  .lg-card {
+    border-radius: var(--lg-r-md);
+  }
+}
